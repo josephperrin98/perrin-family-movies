@@ -1,0 +1,49 @@
+name: Weekly Database Backup
+
+on:
+  schedule:
+    # Every Monday at 06:00 UTC
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run backup script
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python scripts/backup_database.py
+
+      # The repo is public, so artifacts are downloadable by anyone signed in
+      # to GitHub: only ever upload the encrypted file.
+      - name: Encrypt backup
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "BACKUP_PASSPHRASE secret is not set; refusing to upload an unencrypted backup."
+            exit 1
+          fi
+          for f in backup_*.zip; do
+            gpg --batch --yes --pinentry-mode loopback --symmetric --cipher-algo AES256 \
+                --passphrase-fd 0 --output "$f.gpg" "$f" <<< "$BACKUP_PASSPHRASE"
+            rm "$f"
+          done
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: database-backup-${{ github.run_id }}
+          path: backup_*.zip.gpg
+          if-no-files-found: error
+          retention-days: 90
