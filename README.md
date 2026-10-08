@@ -68,7 +68,7 @@ film_app.py            Entry point: page config, navigation, routing
 identity.py            Family passphrase gate and "who's watching" picker
 database.py            Schema and all SQL queries (SQLAlchemy Core)
 omdb.py                OMDb API client
-pages/                 One module per screen
+views/                 One module per screen (not pages/: see test_layout.py)
 components/            Reusable UI pieces (movie cards, search, filters)
 summary/               Monthly summary (service layer, no Streamlit)
   facts.py             Computes every number: averages, ranking, tier

@@ -84,28 +84,28 @@ def render_page():
     current_page = st.session_state.get("current_page", "browse")
     
     if current_page == "browse":
-        from pages import browse
+        from views import browse
         browse.render()
     elif current_page == "top100":
-        from pages import top100
+        from views import top100
         top100.render()
     elif current_page == "family":
-        from pages import family
+        from views import family
         family.render()
     elif current_page == "your_movies":
-        from pages import your_movies
+        from views import your_movies
         your_movies.render()
     elif current_page == "add_review":
-        from pages import add_review
+        from views import add_review
         add_review.render()
     elif current_page == "movie":
-        from pages import movie
+        from views import movie
         movie.render(st.session_state.get("selected_imdb_id"))
     elif current_page == "user_profile":
-        from pages import your_movies
+        from views import your_movies
         your_movies.render(user_id=st.session_state.get("viewing_user_id"))
     else:
-        from pages import browse
+        from views import browse
         browse.render()
 
 
