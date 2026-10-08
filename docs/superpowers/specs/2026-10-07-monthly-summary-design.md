@@ -105,9 +105,9 @@ evals/
 
 ### Display titles (from sub-project #0)
 
-Facts use `movies.display_title`: the original title when the original
-language uses the Latin alphabet, otherwise the French title (from TMDB,
-looked up by `imdb_id`). OMDb only provides English titles, and Claude must
+Facts use `COALESCE(movies.display_title, movies.title)`: the original title
+for French, English, Italian and Spanish films, the English title otherwise
+(original title and language from TMDB, looked up by `imdb_id`). Claude must
 never translate titles itself, because that would be an unverifiable fact.
 
 ### Month boundaries
@@ -252,7 +252,7 @@ Unit tests (`unittest`, no network, in CI):
 Run manually by Joseph with a local API key (never in CI: costs money).
 
 1. `run_evals.py --set dev` runs the 7 dev cases (empty month, one film, big
-   month, tie, title with digits, non-Latin original title, history containing
+   month, tie, title with digits, non-fr/en/it/es original title, history containing
    a joke that must not return).
 2. The report lists each message, the automatic check results, total tokens
    and cost, and a blank human score (1–5) for humour and tone.
