@@ -90,6 +90,12 @@ class TestValidate(unittest.TestCase):
         errors = self.check(message, names=family, facts=facts)
         self.assertTrue(any("personnes" in e for e in errors))
 
+    def test_big_month_is_capped_at_six_hundred_characters(self):
+        rows = [RatingRow(f"Film {i}", "2020", "Drama", "Bob", 7.0, None) for i in range(6)]
+        facts = compute_facts(2026, 9, rows, [])
+        message = "Un mois chargé 🎬 " + "bla " * 150 + "?"
+        self.assertTrue(any("Longueur" in e for e in self.check(message, facts=facts)))
+
     def test_family_classics_may_be_quoted_any_month(self):
         empty = compute_facts(2026, 9, [], [])
         message = ("Pas un film noté ce mois-ci 📺 Comme dirait «OSS 117», ça ne serait pas "

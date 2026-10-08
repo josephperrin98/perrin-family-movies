@@ -12,7 +12,7 @@ from difflib import SequenceMatcher
 
 from summary.facts import FAMILY_CLASSICS, MonthFacts
 
-LENGTH = {"aucun": (80, 400), "leger": (150, 500), "complet": (300, 900)}
+LENGTH = {"aucun": (80, 400), "leger": (150, 500), "complet": (250, 600)}
 MAX_PEOPLE_NAMED = 3  # two in the body, one in the closing nudge
 SIMILARITY_LIMIT = 0.6
 QUOTED = re.compile(r"«\s*(.+?)\s*»")
