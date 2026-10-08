@@ -1,0 +1,8 @@
+{"description": "Full tier, the family strongly disagrees about the same film", "year": 2026, "month": 11, "rows": [
+  {"film": "Barbie", "year": "2023", "genres": "Adventure, Comedy, Fantasy", "who": "Chloé", "score": 9.0, "comment": "Iconique"},
+  {"film": "Barbie", "year": "2023", "genres": "Adventure, Comedy, Fantasy", "who": "Bob", "score": 3.0, "comment": "Je suis Ken et je souffre"},
+  {"film": "Oppenheimer", "year": "2023", "genres": "Biography, Drama, History", "who": "Bob", "score": 9.0, "comment": "Le son de l'explosion"},
+  {"film": "Oppenheimer", "year": "2023", "genres": "Biography, Drama, History", "who": "Chloé", "score": 5.0, "comment": "Trois heures de réunions"},
+  {"film": "Amélie", "year": "2001", "genres": "Comedy, Romance", "who": "Alice", "score": 8.0, "comment": null},
+  {"film": "Intouchables", "year": "2011", "genres": "Biography, Comedy, Drama", "who": "Daniel", "score": 8.5, "comment": "Boogie Wonderland"}],
+ "previous_rows": [], "previous_texts": []}

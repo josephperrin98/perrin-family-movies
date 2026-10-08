@@ -1,0 +1,5 @@
+{"description": "History contains a joke that must not come back", "year": 2026, "month": 7, "rows": [
+  {"film": "Le Daim", "year": "2019", "genres": "Comedy", "who": "Alice", "score": 7.0, "comment": "Encore ce blouson"},
+  {"film": "Les rois mages", "year": "2001", "genres": "Comedy", "who": "Bob", "score": 6.0, "comment": null}],
+ "previous_rows": [],
+ "previous_texts": ["🧥 Ce mois-ci, le vrai héros c'est le blouson en daim : il a volé la vedette à tout le monde ! Bob et Alice se disputent déjà la taille. Qui ose le porter au prochain repas de famille ?"]}

@@ -1,0 +1,8 @@
+{"description": "Full tier where two films tie for best", "year": 2026, "month": 3, "rows": [
+  {"film": "Anatomie d'une chute", "year": "2023", "genres": "Crime, Drama", "who": "Alice", "score": 9.0, "comment": "Le chien mérite la Palme"},
+  {"film": "Shutter Island", "year": "2010", "genres": "Mystery, Thriller", "who": "Bob", "score": 9.0, "comment": "Fin à revoir deux fois"},
+  {"film": "The Menu", "year": "2022", "genres": "Comedy, Horror", "who": "Chloé", "score": 7.0, "comment": "Plus jamais de cheeseburger"},
+  {"film": "Gladiator II", "year": "2024", "genres": "Action, Drama", "who": "Bob", "score": 5.0, "comment": "Des requins au Colisée ?"},
+  {"film": "Podium", "year": "2004", "genres": "Comedy, Music", "who": "Daniel", "score": 7.5, "comment": "Bernard Frédéric forever"},
+  {"film": "Top Gun: Maverick", "year": "2022", "genres": "Action, Drama", "who": "Daniel", "score": 8.0, "comment": null}],
+ "previous_rows": [], "previous_texts": []}

@@ -1,0 +1,13 @@
+{"description": "Full tier, 10 ratings, comments to quote", "year": 2026, "month": 1, "rows": [
+  {"film": "The Godfather", "year": "1972", "genres": "Crime, Drama", "who": "Daniel", "score": 9.5, "comment": "Chef-d'œuvre absolu"},
+  {"film": "The Godfather Part II", "year": "1974", "genres": "Crime, Drama", "who": "Daniel", "score": 9.0, "comment": "Encore mieux ?"},
+  {"film": "The Godfather Part III", "year": "1990", "genres": "Crime, Drama", "who": "Daniel", "score": 6.0, "comment": "On aurait dû s'arrêter à deux"},
+  {"film": "Encanto", "year": "2021", "genres": "Animation, Comedy, Family", "who": "Chloé", "score": 8.0, "comment": "On ne parle pas de Bruno"},
+  {"film": "Encanto", "year": "2021", "genres": "Animation, Comedy, Family", "who": "Alice", "score": 7.0, "comment": "La chanson est restée trois jours"},
+  {"film": "La La Land", "year": "2016", "genres": "Comedy, Drama, Music", "who": "Alice", "score": 8.5, "comment": "J'ai pleuré à la fin"},
+  {"film": "Whiplash", "year": "2014", "genres": "Drama, Music", "who": "Bob", "score": 9.0, "comment": "Not quite my tempo"},
+  {"film": "Mean Girls", "year": "2004", "genres": "Comedy", "who": "Chloé", "score": 7.5, "comment": "Le mercredi on s'habille en rose"},
+  {"film": "Napoleon", "year": "2023", "genres": "Action, Biography, Drama", "who": "Bob", "score": 4.0, "comment": "Trois heures pour ça"},
+  {"film": "Les Misérables", "year": "2019", "genres": "Crime, Drama, Thriller", "who": "Alice", "score": 8.0, "comment": null}],
+ "previous_rows": [{"film": "Tenet", "year": "2020", "genres": "Action", "who": "Bob", "score": 7.0, "comment": null}],
+ "previous_texts": []}

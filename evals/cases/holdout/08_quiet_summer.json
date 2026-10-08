@@ -1,0 +1,5 @@
+{"description": "Light tier, one person did all the rating", "year": 2026, "month": 8, "rows": [
+  {"film": "Mamma Mia!", "year": "2008", "genres": "Comedy, Musical, Romance", "who": "Alice", "score": 8.0, "comment": "En boucle tout l'été"},
+  {"film": "Jaws", "year": "1975", "genres": "Adventure, Thriller", "who": "Alice", "score": 7.5, "comment": "Plus jamais de baignade"},
+  {"film": "Grease", "year": "1978", "genres": "Musical, Romance", "who": "Alice", "score": 6.0, "comment": null}],
+ "previous_rows": [], "previous_texts": []}

@@ -1,0 +1,6 @@
+{"description": "English titles Claude may be tempted to translate into French", "year": 2026, "month": 2, "rows": [
+  {"film": "The Lives of Others", "year": "2006", "genres": "Drama, Thriller", "who": "Alice", "score": 9.0, "comment": "Glaçant"},
+  {"film": "Parasite", "year": "2019", "genres": "Drama, Thriller", "who": "Bob", "score": 8.5, "comment": "La scène de la pluie"},
+  {"film": "Sentimental Value", "year": "2025", "genres": "Drama", "who": "Chloé", "score": 7.0, "comment": null},
+  {"film": "Spirited Away", "year": "2001", "genres": "Animation, Family, Fantasy", "who": "Daniel", "score": 8.0, "comment": "Sans-Visage me hante"}],
+ "previous_rows": [], "previous_texts": []}

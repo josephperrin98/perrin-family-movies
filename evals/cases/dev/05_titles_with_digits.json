@@ -1,0 +1,5 @@
+{"description": "Titles containing digits: digits inside «» are allowed", "year": 2026, "month": 4, "rows": [
+  {"film": "Blade Runner 2049", "year": "2017", "genres": "Action, Drama, Sci-Fi", "who": "Bob", "score": 8.0, "comment": "Long mais beau"},
+  {"film": "8½", "year": "1963", "genres": "Drama", "who": "Daniel", "score": 7.0, "comment": "Je n'ai pas tout suivi"},
+  {"film": "F1", "year": "2025", "genres": "Action, Drama, Sport", "who": "Chloé", "score": 6.5, "comment": "Brad Pitt ne vieillit pas"}],
+ "previous_rows": [], "previous_texts": []}

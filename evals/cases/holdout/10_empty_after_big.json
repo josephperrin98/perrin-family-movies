@@ -1,0 +1,5 @@
+{"description": "Empty month right after a big one, with history", "year": 2026, "month": 12, "rows": [],
+ "previous_rows": [
+  {"film": "Barbie", "year": "2023", "genres": "Comedy", "who": "Chloé", "score": 9.0, "comment": null},
+  {"film": "Oppenheimer", "year": "2023", "genres": "Drama", "who": "Bob", "score": 9.0, "comment": null}],
+ "previous_texts": ["🎬 Novembre a coupé la famille en deux : team rose contre team bombe atomique ! Bob souffre en Ken, Chloé bâille devant les physiciens. Qui tranche le débat au prochain dîner ?"]}
