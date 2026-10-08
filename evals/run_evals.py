@@ -21,6 +21,8 @@ from summary.validate import validate
 from summary.writer import build_payload, write_colour
 
 ROOT = Path(__file__).parent
+# Same size as the real family, but fake names: no real data in the repo
+FAKE_FAMILY = ["Alice", "Bob", "Chloé", "Daniel", "Emma", "Félix"]
 PRICES_PER_MTOK = {"claude-opus-5-5": (4.0, 20.0), "claude-sonnet-5-5": (2.0, 10.0)}
 
 
@@ -30,6 +32,7 @@ def load_case(path: Path):
         case["year"], case["month"],
         [RatingRow(**r) for r in case["rows"]],
         [RatingRow(**r) for r in case.get("previous_rows", [])],
+        family=case.get("family", FAKE_FAMILY),
     )
     return case, facts
 

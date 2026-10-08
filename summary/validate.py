@@ -13,6 +13,7 @@ from difflib import SequenceMatcher
 from summary.facts import FAMILY_CLASSICS, MonthFacts
 
 LENGTH = {"aucun": (80, 400), "leger": (150, 500), "complet": (300, 900)}
+MAX_PEOPLE_NAMED = 3  # two in the body, one in the closing nudge
 SIMILARITY_LIMIT = 0.6
 QUOTED = re.compile(r"«\s*(.+?)\s*»")
 
@@ -37,9 +38,15 @@ def validate(colour, facts: MonthFacts, previous_texts: list[str]) -> list[str]:
             errors.append(f"Titre inconnu : «{title}». Recopie exactement un titre de 'notes' ou de 'classiques_famille'.")
     if {t.lower() for t in colour.titles_mentioned} != {t.lower() for t in quoted}:
         errors.append("titles_mentioned doit lister exactement les titres écrits entre « ».")
+    family = set(facts.family) | facts.people
     for name in colour.names_mentioned:
-        if name not in facts.people:
+        if name not in family:
             errors.append(f"Prénom inconnu : {name}. Cite uniquement les personnes des données.")
+    # Counted from the text itself, not from what the model says it did
+    named = [n for n in family if re.search(rf"\b{re.escape(n)}\b", message)]
+    if len(named) > MAX_PEOPLE_NAMED:
+        errors.append(f"Trop de personnes citées ({', '.join(sorted(named))}) : "
+                      f"parle d'au plus deux personnes, plus une dans la relance finale.")
 
     if re.search(r"\d", QUOTED.sub("", message)):
         errors.append("N'écris aucun chiffre en dehors des titres : les chiffres sont déjà dans le résumé.")

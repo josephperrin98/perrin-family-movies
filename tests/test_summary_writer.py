@@ -29,6 +29,7 @@ class TestPayload(unittest.TestCase):
         self.assertEqual(payload["notes"][0]["commentaire"], "Le blouson !")
         self.assertEqual(payload["deja_ecrit"], ["texte d'août"])
         self.assertIn("OSS 117", payload["classiques_famille"])
+        self.assertEqual(payload["sans_note"], [])
 
     def test_extended_period_label(self):
         payload = build_payload(facts(until=date(2026, 10, 9)), [])

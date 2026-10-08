@@ -95,6 +95,9 @@ class FakeStore:
     def previous_colour_texts(self, year, month, limit=3):
         return []
 
+    def family_names(self):
+        return ["Chloé", "Bob"]
+
     def save_summary(self, year, month, tier, generation, model):
         self.saved.append((year, month, tier, model))
 
@@ -111,6 +114,16 @@ class TestRunMonth(unittest.TestCase):
         self.assertEqual(outcome.status, "sent")
         self.assertEqual(self.emails[0][0], "Résumé Perrin-rama: Sept'26")
         self.assertEqual(store.saved, [(2026, 9, "leger", "claude-opus-5-5")])
+
+    def test_family_from_the_store_reaches_the_message_data(self):
+        payloads = []
+
+        def write(payload, feedback):
+            payloads.append(payload)
+            return writer(GOOD)(payload, feedback)
+
+        run_month(FakeStore(self.rows), 2026, 9, write, self.send, "m", dry_run=True)
+        self.assertEqual(payloads[0]["sans_note"], ["Bob"])
 
     def test_until_widens_the_period_but_not_the_previous_month(self):
         store = FakeStore(self.rows)

@@ -6,11 +6,11 @@ exhaustively and never invented by the model.
 """
 
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from decimal import ROUND_HALF_UP, Decimal
 from statistics import mean
-from typing import Optional
+from typing import Iterable, Optional
 from zoneinfo import ZoneInfo
 
 PARIS = ZoneInfo("Europe/Paris")
@@ -57,6 +57,7 @@ class MonthFacts:
     previous_count: int
     previous_average: Optional[float]
     until: Optional[date] = None  # set when the period runs past the month's end
+    family: list[str] = field(default_factory=list)  # every family member, in app order
 
     @property
     def films(self) -> set[str]:
@@ -65,6 +66,11 @@ class MonthFacts:
     @property
     def people(self) -> set[str]:
         return {r.who for r in self.rows}
+
+    @property
+    def absent(self) -> list[str]:
+        """Family members with no rating in the period, for the closing nudge."""
+        return [name for name in self.family if name not in self.people]
 
 
 def month_before(year: int, month: int) -> tuple[int, int]:
@@ -120,7 +126,7 @@ def _favourite_genre(rows: list[RatingRow]) -> Optional[str]:
 
 
 def compute_facts(year: int, month: int, rows: list[RatingRow], previous_rows: list[RatingRow],
-                  until: Optional[date] = None) -> MonthFacts:
+                  until: Optional[date] = None, family: Iterable[str] = ()) -> MonthFacts:
     scores = _film_scores(rows)
     best = sorted(scores, key=lambda s: (-s.average, s.film))[:3]
     worst = sorted((s for s in scores if s not in best), key=lambda s: (s.average, s.film))[:3]
@@ -139,4 +145,5 @@ def compute_facts(year: int, month: int, rows: list[RatingRow], previous_rows: l
         previous_count=len(previous_rows),
         previous_average=_average(previous_rows),
         until=until,
+        family=list(family),
     )

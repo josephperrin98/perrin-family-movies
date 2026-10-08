@@ -1,7 +1,7 @@
 """
 Every SQL query the monthly summary needs, behind one small class.
 
-service.run_month only calls these four methods, so tests can pass an
+service.run_month only calls these methods, so tests can pass an
 in-memory fake instead of a database (the repository pattern).
 """
 
@@ -34,6 +34,11 @@ class PostgresStore:
                 {"start": start, "end": end},
             ).mappings().all()
         return [RatingRow(**row) for row in rows]
+
+    def family_names(self) -> list[str]:
+        with self.engine.connect() as conn:
+            rows = conn.execute(text("SELECT display_name FROM users ORDER BY id")).all()
+        return [r.display_name for r in rows]
 
     def summary_exists(self, year: int, month: int) -> bool:
         with self.engine.connect() as conn:

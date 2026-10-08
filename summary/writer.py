@@ -59,6 +59,7 @@ def build_payload(facts: MonthFacts, previous_texts: list[str]) -> dict:
         "mois_precedent": {"nb_notes": facts.previous_count, "moyenne": facts.previous_average},
         "deja_ecrit": previous_texts,
         "classiques_famille": FAMILY_CLASSICS,
+        "sans_note": facts.absent,
     }
 
 

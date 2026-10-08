@@ -83,7 +83,8 @@ def run_month(store, year: int, month: int, write: Writer, send: Callable[[str, 
         return RunOutcome("already_sent", email_subject)
 
     facts = compute_facts(year, month, store.month_rows(year, month, until),
-                          store.month_rows(*month_before(year, month)), until=until)
+                          store.month_rows(*month_before(year, month)), until=until,
+                          family=store.family_names())
     generation = generate_message(facts, store.previous_colour_texts(year, month), write)
     if dry_run:
         return RunOutcome("dry_run", email_subject, generation)

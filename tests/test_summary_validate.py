@@ -78,6 +78,18 @@ class TestValidate(unittest.TestCase):
         errors = self.check(message, facts=empty)
         self.assertTrue(any("Tenet" in e for e in errors))
 
+    def test_family_member_without_ratings_may_be_named(self):
+        facts = compute_facts(2026, 9, light_month().rows, [], family=["Chloé", "Bob", "Mamie"])
+        message = GOOD.replace("Qui ose le revoir avec lui ?", "Et Mamie, on t'attend : qui ose le revoir ?")
+        self.assertEqual(self.check(message, names=["Chloé", "Bob", "Mamie"], facts=facts), [])
+
+    def test_at_most_three_family_members_are_named(self):
+        family = ["Chloé", "Bob", "Alice", "Daniel"]
+        facts = compute_facts(2026, 9, light_month().rows, [], family=family)
+        message = GOOD.replace("Qui ose", "Alice et Daniel, qui ose")
+        errors = self.check(message, names=family, facts=facts)
+        self.assertTrue(any("personnes" in e for e in errors))
+
     def test_family_classics_may_be_quoted_any_month(self):
         empty = compute_facts(2026, 9, [], [])
         message = ("Pas un film noté ce mois-ci 📺 Comme dirait «OSS 117», ça ne serait pas "

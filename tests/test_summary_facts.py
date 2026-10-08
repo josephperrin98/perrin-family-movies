@@ -89,6 +89,11 @@ class TestComputeFacts(unittest.TestCase):
     def test_no_genres(self):
         self.assertIsNone(compute_facts(2026, 9, [row("A", "Bob", 8, None)], []).favourite_genre)
 
+    def test_absent_lists_family_members_without_ratings_in_family_order(self):
+        rows = [row("A", "Bob", 8)]
+        facts = compute_facts(2026, 9, rows, [], family=["Alice", "Bob", "Chloé"])
+        self.assertEqual(facts.absent, ["Alice", "Chloé"])
+
     def test_until_is_kept_on_the_facts(self):
         self.assertEqual(compute_facts(2026, 9, [], [], until=date(2026, 10, 9)).until, date(2026, 10, 9))
 
