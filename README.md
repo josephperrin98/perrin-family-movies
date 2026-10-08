@@ -3,7 +3,9 @@
 [![Tests](https://github.com/josephperrin98/perrin-family-movies/actions/workflows/tests.yml/badge.svg)](https://github.com/josephperrin98/perrin-family-movies/actions/workflows/tests.yml)
 
 A small web app my family uses to rate the films we watch together, keep a
-watchlist, and settle arguments with a fair "family Top 100".
+watchlist, and settle arguments with a fair "family Top 100". On the 1st of
+each month, Claude writes a short, funny recap of what everyone watched, for
+the family WhatsApp group.
 
 Built with Python and [Streamlit](https://streamlit.io), backed by Postgres,
 with film data from the [OMDb API](https://www.omdbapi.com/).
@@ -47,13 +49,16 @@ flowchart LR
     App -->|HTTPS| OMDb[OMDb API]
     GH[GitHub Actions<br/>weekly cron] -->|read-only dump| DB
     GH -->|gpg-encrypted zip| Artifacts[Workflow artifacts]
+    GH2[GitHub Actions<br/>monthly cron] -->|month's ratings| DB
+    GH2 -->|facts as JSON| Claude[Claude API]
+    GH2 -->|email + WhatsApp link| Gmail[Gmail SMTP]
 ```
 
 - **Code** lives in this repo. Streamlit Community Cloud redeploys on every
   push to `main`.
 - **Data** lives in [Neon](https://neon.tech), a serverless Postgres. Nothing
   personal is stored in git.
-- **Secrets** (database URL, API key, passphrase) are stored in Streamlit's
+- **Secrets** (database URL, API keys, passphrase) are stored in Streamlit's
   and GitHub's secret managers, never in the repo.
 
 ### Project layout
@@ -65,9 +70,21 @@ database.py            Schema and all SQL queries (SQLAlchemy Core)
 omdb.py                OMDb API client
 pages/                 One module per screen
 components/            Reusable UI pieces (movie cards, search, filters)
+summary/               Monthly summary (service layer, no Streamlit)
+  facts.py             Computes every number: averages, ranking, tier
+  store.py             All of its SQL, behind one class
+  writer.py            The Claude call, with structured output
+  prompt_fr.txt        The system prompt (French)
+  validate.py          Checks Claude's text against the facts
+  service.py           Orchestration: retry, fallback, email, record
+  render.py            Title, bullets, AI-free fallback text
+  delivery.py          Email with a "send to WhatsApp" link
+  titles.py            Original titles from TMDB
 scripts/
   import_csv.py        Bulk-import ratings from a spreadsheet export
   backup_database.py   Dump every table to a zip of CSVs
+  send_monthly_summary.py   Command-line entry point for the summary
+evals/                 Fake months and reports used to tune the prompt
 examples/              Demo CSV in the import format
 tests/                 unittest suite (no network or database needed)
 ```
@@ -81,6 +98,9 @@ tests/                 unittest suite (no network or database needed)
 | `DATABASE_URL` | Create a free project on [Neon](https://neon.tech), then **Connect** → copy the *pooled* connection string. Any Postgres works. |
 | `OMDB_API_KEY` | Request a free key at [omdbapi.com/apikey.aspx](https://www.omdbapi.com/apikey.aspx). It arrives by email and must be activated. |
 | `TMDB_READ_TOKEN` | Optional, for display titles in the monthly summary. Free account on [themoviedb.org](https://www.themoviedb.org/) → Settings → API → *API Read Access Token*. |
+| `ANTHROPIC_API_KEY` | Monthly summary only. [console.anthropic.com](https://console.anthropic.com) → API Keys. Shown once: store it in a password manager. |
+| `SMTP_USER`, `SMTP_APP_PASSWORD` | Monthly summary only. A Gmail address with 2-Step Verification on, and an [app password](https://myaccount.google.com/apppasswords) (not the account password). |
+| `SUMMARY_TO` | Monthly summary only. Where the summary email goes. |
 | `family_pin` | Optional. Any passphrase. Prefer a few words over 4 digits: there is no lockout on wrong attempts. |
 
 ### 2. Run locally
@@ -115,6 +135,103 @@ name.
 ```bash
 DATABASE_URL=... OMDB_API_KEY=... python scripts/import_csv.py examples/demo_ratings.csv
 ```
+
+## Monthly summary: an LLM in a box
+
+On the 1st of each month, a GitHub Actions job emails me the family's
+recap with a green **Envoyer sur WhatsApp** button. One tap opens WhatsApp
+with the text pre-filled; I read it and forward it to the group. WhatsApp
+has no free API for posting to groups, and a human check before anything
+reaches the family is a feature anyway.
+
+The message has three parts:
+
+```
+*Résumé Perrin-rama — octobre 2026*          ← code
+
+Two or three warm, funny sentences: the       ← Claude
+month's highlights, one joke, an invitation
+to watch and rate more films.
+
+🎬 12 notes · moyenne 7,4/10                  ← code
+🥇 «Le Prénom» 8,6 …
+```
+
+### Code computes the facts, Claude only writes the colour
+
+Language models are good at tone and bad at arithmetic and at not inventing
+things. So every number, ranking and title shown is computed in Python
+([`summary/facts.py`](summary/facts.py)) and rendered by code. Claude receives
+those facts as JSON and writes only the opening paragraph, which may not
+contain a single digit. If Claude gets something wrong, the facts are still
+right.
+
+```mermaid
+flowchart LR
+    DB[(Ratings)] --> Facts[facts.py<br/>numbers, tier]
+    Facts --> Writer[writer.py<br/>Claude call]
+    Writer --> Check{validate.py}
+    Check -->|errors| Writer
+    Check -->|3 failures| Fallback[Fixed AI-free sentence]
+    Check -->|ok| Mail[Email]
+    Fallback --> Mail
+    Mail --> Record[(monthly_summaries)]
+```
+
+### Guardrails
+
+- **Structured output.** The [SDK](https://github.com/anthropics/anthropic-sdk-python)'s
+  `messages.parse` returns a Pydantic object (`message`, `titles_mentioned`,
+  `names_mentioned`), not free text to parse.
+- **Validation** ([`summary/validate.py`](summary/validate.py)) rejects:
+  a title that isn't one of the month's films or a family classic; a first
+  name of someone who didn't rate anything (checked in the text itself, not
+  just in what Claude says it mentioned); more than two people named; any
+  digit; the wrong length for the month's size; no question at the end; text
+  too similar to the last three summaries.
+- **Retry with feedback.** A rejected draft goes back in a new, standalone
+  request with the exact list of errors, up to three attempts. After that, the
+  family gets the facts with a fixed sentence written by me. The summary
+  never fails to arrive because of the AI.
+- **Email first, then record.** A row in `monthly_summaries` marks the month as
+  sent. It's written only after the email leaves, so a failed send is simply
+  retried next run, and a second run for the same month does nothing.
+- **Public logs stay clean.** The repo is public, so its workflow logs are too:
+  the job prints counts and token usage, never names, comments or the message.
+
+### Evals: how the prompt was tuned
+
+The prompt ([`summary/prompt_fr.txt`](summary/prompt_fr.txt)) was tuned on
+ten fake months with a fake family, never on real data
+([`evals/`](evals/)): seven for development, three held back until the end
+to check the prompt hadn't just learned the examples. Each run measures the
+**first** attempt only, since production retries would hide a weak prompt,
+and writes a report for me to score the humour by hand. One prompt change
+per commit, with its report.
+
+| Version | Change | Dev set | Cost |
+|---|---|---|---|
+| v1 | First prompt | 7/7 | $0.14 |
+| v2 | Humour guidance and the family's classic films | 6/7 | $0.20 |
+| v3 | Fewer jokes: highlights, one joke, invitation | 7/7 | $0.18 |
+| v4 | General closing invitation, never naming who didn't rate | 6/7 | $0.19 |
+| v4 | **Holdout** | **3/3** | $0.07 |
+
+The v4 failure was a "100 %" in the text, which validation catches and a
+retry fixes. Each summary costs about two cents with `claude-opus-5-5`.
+
+### Running it
+
+```bash
+# Print last month's summary without sending or recording anything
+python -m scripts.send_monthly_summary --dry-run
+
+# Send a given month (can be extended into the next one)
+python -m scripts.send_monthly_summary --month 2026-09 --until 2026-10-09
+```
+
+[`monthly-summary.yml`](.github/workflows/monthly-summary.yml) runs this on the
+1st of each month. A manual run from the Actions tab defaults to a dry run.
 
 ## Backups
 
@@ -152,12 +269,20 @@ The suite needs no network or database. It runs on every push via
   other. The passphrase is compared with `hmac.compare_digest` so response time
   doesn't reveal how much of a guess was right.
 - **Standard library first.** Tests use `unittest`, backups use `zipfile` and
-  `csv`. Every extra dependency is something that can break.
+  `csv`, email uses `smtplib`. Every extra dependency is something that can
+  break.
+- **Hide nothing behind a library's retries.** The first live email failed
+  with "connection unexpectedly closed". The real cause was a wrong password:
+  `smtplib.login()` retries a second login method after Gmail's refusal,
+  Gmail hangs up, and the original error is lost. The code now uses one
+  method so the real error comes through
+  ([`summary/delivery.py`](summary/delivery.py)).
 
 ## Roadmap
 
-Next up: AI agents on top of the ratings data, from a monthly viewing summary
-to film recommendations to logging past viewings in plain language.
+- [x] Monthly summary written by Claude (above)
+- [ ] Film recommendations for the family, from everyone's ratings
+- [ ] Logging past viewings in plain language ("we saw Dune on Sunday, 8/10")
 
 ## License
 
