@@ -13,7 +13,7 @@ from difflib import SequenceMatcher
 from summary.facts import FAMILY_CLASSICS, MonthFacts
 
 LENGTH = {"aucun": (80, 400), "leger": (150, 500), "complet": (250, 600)}
-MAX_PEOPLE_NAMED = 3  # two in the body, one in the closing nudge
+MAX_PEOPLE_NAMED = 2
 SIMILARITY_LIMIT = 0.6
 QUOTED = re.compile(r"«\s*(.+?)\s*»")
 
@@ -38,15 +38,15 @@ def validate(colour, facts: MonthFacts, previous_texts: list[str]) -> list[str]:
             errors.append(f"Titre inconnu : «{title}». Recopie exactement un titre de 'notes' ou de 'classiques_famille'.")
     if {t.lower() for t in colour.titles_mentioned} != {t.lower() for t in quoted}:
         errors.append("titles_mentioned doit lister exactement les titres écrits entre « ».")
+    # Names are found in the text itself, not only in what the model says it did
     family = set(facts.family) | facts.people
-    for name in colour.names_mentioned:
-        if name not in family:
-            errors.append(f"Prénom inconnu : {name}. Cite uniquement les personnes des données.")
-    # Counted from the text itself, not from what the model says it did
-    named = [n for n in family if re.search(rf"\b{re.escape(n)}\b", message)]
+    named = {n for n in family if re.search(rf"\b{re.escape(n)}\b", message)}
+    for name in sorted(named | set(colour.names_mentioned)):
+        if name not in facts.people:
+            errors.append(f"Ne cite pas {name} : cite uniquement les personnes qui ont noté un film.")
     if len(named) > MAX_PEOPLE_NAMED:
         errors.append(f"Trop de personnes citées ({', '.join(sorted(named))}) : "
-                      f"parle d'au plus deux personnes, plus une dans la relance finale.")
+                      f"parle d'au plus {MAX_PEOPLE_NAMED} personnes.")
 
     if re.search(r"\d", QUOTED.sub("", message)):
         errors.append("N'écris aucun chiffre en dehors des titres : les chiffres sont déjà dans le résumé.")

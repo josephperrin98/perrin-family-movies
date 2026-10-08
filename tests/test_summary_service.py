@@ -115,15 +115,13 @@ class TestRunMonth(unittest.TestCase):
         self.assertEqual(self.emails[0][0], "Résumé Perrin-rama: Sept'26")
         self.assertEqual(store.saved, [(2026, 9, "leger", "claude-opus-5-5")])
 
-    def test_family_from_the_store_reaches_the_message_data(self):
-        payloads = []
-
-        def write(payload, feedback):
-            payloads.append(payload)
-            return writer(GOOD)(payload, feedback)
-
-        run_month(FakeStore(self.rows), 2026, 9, write, self.send, "m", dry_run=True)
-        self.assertEqual(payloads[0]["sans_note"], ["Bob"])
+    def test_draft_naming_someone_who_did_not_rate_is_retried(self):
+        # Bob is in the family (from the store) but rated nothing this month
+        nudge = GOOD.replace("Qui l'accompagne", "Bob, tu l'accompagnes")
+        write = writer(nudge, GOOD)
+        outcome = run_month(FakeStore(self.rows), 2026, 9, write, self.send, "m", dry_run=True)
+        self.assertEqual(outcome.generation.attempts, 2)
+        self.assertTrue(any("Bob" in e for e in write.calls[1][1]))
 
     def test_until_widens_the_period_but_not_the_previous_month(self):
         store = FakeStore(self.rows)

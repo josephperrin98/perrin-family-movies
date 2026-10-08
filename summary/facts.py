@@ -57,7 +57,7 @@ class MonthFacts:
     previous_count: int
     previous_average: Optional[float]
     until: Optional[date] = None  # set when the period runs past the month's end
-    family: list[str] = field(default_factory=list)  # every family member, in app order
+    family: list[str] = field(default_factory=list)  # every family member, so validate can spot names that shouldn't appear
 
     @property
     def films(self) -> set[str]:
@@ -66,11 +66,6 @@ class MonthFacts:
     @property
     def people(self) -> set[str]:
         return {r.who for r in self.rows}
-
-    @property
-    def absent(self) -> list[str]:
-        """Family members with no rating in the period, for the closing nudge."""
-        return [name for name in self.family if name not in self.people]
 
 
 def month_before(year: int, month: int) -> tuple[int, int]:

@@ -78,16 +78,18 @@ class TestValidate(unittest.TestCase):
         errors = self.check(message, facts=empty)
         self.assertTrue(any("Tenet" in e for e in errors))
 
-    def test_family_member_without_ratings_may_be_named(self):
+    def test_family_member_without_ratings_must_not_be_named(self):
+        # Checked in the text itself, even if the model leaves the name out of names_mentioned
         facts = compute_facts(2026, 9, light_month().rows, [], family=["Chloé", "Bob", "Mamie"])
-        message = GOOD.replace("Qui ose le revoir avec lui ?", "Et Mamie, on t'attend : qui ose le revoir ?")
-        self.assertEqual(self.check(message, names=["Chloé", "Bob", "Mamie"], facts=facts), [])
+        message = GOOD.replace("Qui ose le revoir avec lui ?", "Et Mamie, qui ose le revoir ?")
+        errors = self.check(message, names=["Chloé", "Bob"], facts=facts)
+        self.assertTrue(any("Mamie" in e for e in errors))
 
-    def test_at_most_three_family_members_are_named(self):
-        family = ["Chloé", "Bob", "Alice", "Daniel"]
-        facts = compute_facts(2026, 9, light_month().rows, [], family=family)
-        message = GOOD.replace("Qui ose", "Alice et Daniel, qui ose")
-        errors = self.check(message, names=family, facts=facts)
+    def test_at_most_two_people_are_named(self):
+        rows = light_month().rows + [RatingRow("Le Daim", "2019", "Comedy", "Alice", 7.0, None)]
+        facts = compute_facts(2026, 9, rows, [])
+        message = GOOD.replace("Qui ose", "Alice, qui ose")
+        errors = self.check(message, names=["Chloé", "Bob", "Alice"], facts=facts)
         self.assertTrue(any("personnes" in e for e in errors))
 
     def test_big_month_is_capped_at_six_hundred_characters(self):
