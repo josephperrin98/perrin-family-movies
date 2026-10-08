@@ -16,6 +16,7 @@ from summary.validate import validate
 from summary.writer import WriterError, WriterResult, build_payload
 
 MAX_ATTEMPTS = 3  # first try + 2 retries
+API_ERROR = "API indisponible : "
 
 Writer = Callable[[dict, Optional[tuple[str, list[str]]]], WriterResult]
 
@@ -51,7 +52,7 @@ def generate_message(facts: MonthFacts, previous_texts: list[str], write: Writer
         try:
             result = write(payload, feedback)
         except WriterError as e:
-            errors_log.append([f"API indisponible : {e}"])
+            errors_log.append([f"{API_ERROR}{e}"])
             break
         tokens_in += result.input_tokens
         tokens_out += result.output_tokens
@@ -69,6 +70,22 @@ def generate_message(facts: MonthFacts, previous_texts: list[str], write: Writer
     fallback = fallback_colour(facts.tier, period_label(facts.year, facts.month, facts.until))
     return Generation(None, assemble(title_line, fallback, facts_text), True, attempts,
                       errors_log, tokens_in, tokens_out)
+
+
+def loggable_errors(errors: list[list[str]], public: bool) -> list[str]:
+    """One log line per failed attempt.
+
+    Public logs (the repo is public) keep API errors, which say nothing about
+    the family, and reduce validation errors, which quote names and drafts,
+    to a count.
+    """
+    lines = []
+    for i, attempt in enumerate(errors, 1):
+        if public and not all(e.startswith(API_ERROR) for e in attempt):
+            lines.append(f"attempt {i}: {len(attempt)} validation errors (hidden in public logs)")
+        else:
+            lines.append(f"attempt {i} errors: {attempt}")
+    return lines
 
 
 def run_month(store, year: int, month: int, write: Writer, send: Callable[[str, str], None],

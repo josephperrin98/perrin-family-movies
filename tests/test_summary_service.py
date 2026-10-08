@@ -3,7 +3,7 @@ from datetime import date
 
 from summary.delivery import MAX_MESSAGE_CHARS
 from summary.facts import RatingRow, compute_facts
-from summary.service import MAX_ATTEMPTS, generate_message, run_month
+from summary.service import MAX_ATTEMPTS, generate_message, loggable_errors, run_month
 from summary.writer import Colour, WriterError, WriterResult
 
 GOOD = ("Ce mois-ci, Chloé a plongé dans «Le Daim» et en est ressortie avec "
@@ -151,6 +151,23 @@ class TestRunMonth(unittest.TestCase):
         with self.assertRaises(OSError):
             run_month(store, 2026, 9, writer(GOOD), broken_send, "m")
         self.assertEqual(store.saved, [])
+
+
+
+class TestLoggableErrors(unittest.TestCase):
+    ERRORS = [["API indisponible : invalid x-api-key"],
+              ["Ne cite pas Bob : cite uniquement…", "Trop long"]]
+
+    def test_private_logs_show_everything(self):
+        self.assertEqual(loggable_errors(self.ERRORS, public=False),
+                         ["attempt 1 errors: ['API indisponible : invalid x-api-key']",
+                          "attempt 2 errors: ['Ne cite pas Bob : cite uniquement…', 'Trop long']"])
+
+    def test_public_logs_show_api_errors_but_only_count_validation_errors(self):
+        # API errors carry no family data; validation errors quote names and drafts
+        self.assertEqual(loggable_errors(self.ERRORS, public=True),
+                         ["attempt 1 errors: ['API indisponible : invalid x-api-key']",
+                          "attempt 2: 2 validation errors (hidden in public logs)"])
 
 
 if __name__ == "__main__":

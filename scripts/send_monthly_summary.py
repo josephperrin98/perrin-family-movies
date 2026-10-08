@@ -17,7 +17,7 @@ import anthropic
 import database
 from summary.delivery import build_email, send_email
 from summary.facts import PARIS, month_before
-from summary.service import run_month
+from summary.service import loggable_errors, run_month
 from summary.store import PostgresStore
 from summary.titles import TmdbAuthError, fetch_tmdb_titles, fill_display_titles
 from summary.writer import write_colour
@@ -86,10 +86,10 @@ def main():
         return
     print(f"attempts={g.attempts} fallback={g.used_fallback} chars={len(g.full_message)} "
           f"tokens_in={g.input_tokens} tokens_out={g.output_tokens}")
+    for line in loggable_errors(g.errors, public_logs):
+        print(line)
     # Workflow logs on a public repo are public: never print family data there
     if not public_logs:
-        for i, errors in enumerate(g.errors, 1):
-            print(f"attempt {i} errors: {errors}")
         print("\n" + g.full_message)
 
 
