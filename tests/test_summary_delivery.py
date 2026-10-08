@@ -37,8 +37,19 @@ class TestEmail(unittest.TestCase):
             send_email(msg, "bot@gmail.com", "app-password")
         smtp.assert_called_once_with("smtp.gmail.com", 465, timeout=30)
         server = smtp.return_value.__enter__.return_value
-        server.login.assert_called_once_with("bot@gmail.com", "app-password")
+        server.ehlo.assert_called_once_with()  # auth() doesn't greet the server itself
+        mechanism, authobject = server.auth.call_args.args
+        self.assertEqual(mechanism, "PLAIN")
+        self.assertEqual(authobject(), "\0bot@gmail.com\0app-password")
         server.send_message.assert_called_once_with(msg)
+
+    def test_spaces_in_app_password_are_removed(self):
+        # Google displays app passwords as "abcd efgh ijkl mnop"
+        msg = build_email("bot@gmail.com", "me@hotmail.fr", "s", "m")
+        with mock.patch("summary.delivery.smtplib.SMTP_SSL") as smtp:
+            send_email(msg, "bot@gmail.com", "abcd efgh ijkl mnop")
+        server = smtp.return_value.__enter__.return_value
+        self.assertEqual(server.auth.call_args.args[1](), "\0bot@gmail.com\0abcdefghijklmnop")
 
 
 if __name__ == "__main__":

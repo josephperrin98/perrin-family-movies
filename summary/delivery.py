@@ -37,6 +37,14 @@ font-family: sans-serif; font-weight: bold;">Envoyer sur WhatsApp</a></p>""",
 
 
 def send_email(msg: EmailMessage, user: str, password: str) -> None:
+    # Google displays app passwords in groups of four; the spaces aren't part of it
+    password = password.replace(" ", "")
     with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=30) as server:
-        server.login(user, password)
+        # login() greets the server for us; auth() doesn't. Without the greeting
+        # Gmail answers "503 EHLO first", which smtplib mistakes for success.
+        server.ehlo()
+        # One mechanism only. server.login() falls back to AUTH LOGIN after a
+        # rejected AUTH PLAIN, Gmail then hangs up, and the real "535 wrong
+        # credentials" error is replaced by "connection unexpectedly closed".
+        server.auth("PLAIN", lambda challenge=None: f"\0{user}\0{password}")
         server.send_message(msg)
