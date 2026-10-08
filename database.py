@@ -110,7 +110,7 @@ def init_db():
             )
         """))
         
-        # Title shown in the monthly summary (original or French), filled from TMDB
+        # Title shown in the monthly summary (see summary/titles.py), filled from TMDB
         conn.execute(text("ALTER TABLE movies ADD COLUMN IF NOT EXISTS display_title TEXT"))
 
         # One row per monthly summary emailed (see summary/store.py)
