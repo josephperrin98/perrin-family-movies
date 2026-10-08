@@ -1,7 +1,7 @@
 import unittest
 from datetime import date, datetime
 
-from summary.facts import RatingRow, compute_facts, month_before, month_bounds_utc, tier_for
+from summary.facts import RatingRow, compute_facts, month_before, month_bounds_utc, round1, tier_for
 
 
 def row(film, who, score, genres="Drama", comment=None):
@@ -36,6 +36,13 @@ class TestMonths(unittest.TestCase):
             month_bounds_utc(2026, 9, until=date(2026, 10, 9)),
             (datetime(2026, 8, 31, 22, 0), datetime(2026, 10, 8, 22, 0)),
         )
+
+
+class TestRounding(unittest.TestCase):
+    def test_halves_round_up(self):
+        self.assertEqual(round1(6.25), 6.3)
+        self.assertEqual(round1(7.75), 7.8)
+        self.assertEqual(round1(7.666), 7.7)
 
 
 class TestTiers(unittest.TestCase):

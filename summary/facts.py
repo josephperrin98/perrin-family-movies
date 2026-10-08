@@ -8,6 +8,7 @@ exhaustively and never invented by the model.
 from collections import Counter
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
+from decimal import ROUND_HALF_UP, Decimal
 from statistics import mean
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -84,15 +85,21 @@ def tier_for(count: int) -> str:
     return "complet"
 
 
+def round1(value: float) -> float:
+    """Round to one decimal, halves up (6.25 -> 6.3), as people expect.
+    Python's round() rounds halves to even and gives 6.2."""
+    return float(Decimal(str(value)).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP))
+
+
 def _average(rows: list[RatingRow]) -> Optional[float]:
-    return round(mean(r.score for r in rows), 1) if rows else None
+    return round1(mean(r.score for r in rows)) if rows else None
 
 
 def _film_scores(rows: list[RatingRow]) -> list[FilmScore]:
     by_film: dict[str, list[float]] = {}
     for r in rows:
         by_film.setdefault(r.film, []).append(r.score)
-    return [FilmScore(film, round(mean(s), 1), len(s)) for film, s in by_film.items()]
+    return [FilmScore(film, round1(mean(s)), len(s)) for film, s in by_film.items()]
 
 
 def _favourite_genre(rows: list[RatingRow]) -> Optional[str]:
