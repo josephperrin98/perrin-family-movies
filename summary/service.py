@@ -11,7 +11,7 @@ from datetime import date
 from typing import Callable, Optional
 
 from summary.facts import MonthFacts, compute_facts, month_before
-from summary.render import assemble, fallback_colour, period_label, render_facts, subject
+from summary.render import assemble, fallback_colour, period_label, render_facts, subject, title
 from summary.validate import validate
 from summary.writer import WriterError, WriterResult, build_payload
 
@@ -41,6 +41,7 @@ class RunOutcome:
 def generate_message(facts: MonthFacts, previous_texts: list[str], write: Writer) -> Generation:
     payload = build_payload(facts, previous_texts)
     facts_text = render_facts(facts)
+    title_line = title(facts.year, facts.month, facts.until)
     errors_log: list[list[str]] = []
     tokens_in = tokens_out = 0
     feedback = None
@@ -60,13 +61,13 @@ def generate_message(facts: MonthFacts, previous_texts: list[str], write: Writer
         errors = validate(result.colour, facts, previous_texts)
         if not errors:
             message = result.colour.message
-            return Generation(message, assemble(message, facts_text), False, attempts,
+            return Generation(message, assemble(title_line, message, facts_text), False, attempts,
                               errors_log, tokens_in, tokens_out)
         errors_log.append(errors)
         feedback = (result.colour.message, errors)
 
     fallback = fallback_colour(facts.tier, period_label(facts.year, facts.month, facts.until))
-    return Generation(None, assemble(fallback, facts_text), True, attempts,
+    return Generation(None, assemble(title_line, fallback, facts_text), True, attempts,
                       errors_log, tokens_in, tokens_out)
 
 

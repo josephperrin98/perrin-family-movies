@@ -83,5 +83,11 @@ def fallback_colour(tier: str, label: str) -> str:
     return f"🎬 Gros mois cinéma en {label} ! Voici le bilan. Et vous, votre coup de cœur ?"
 
 
-def assemble(colour: str, facts_text: str) -> str:
-    return "\n\n".join(part for part in (colour, facts_text) if part)
+def title(year: int, month: int, until: Optional[date] = None) -> str:
+    """First line of the message, so the family knows what they're reading.
+    Asterisks make it bold in WhatsApp."""
+    return f"*Résumé Perrin-rama — {period_label(year, month, until)}*"
+
+
+def assemble(title_line: str, colour: str, facts_text: str) -> str:
+    return "\n\n".join(part for part in (title_line, colour, facts_text) if part)

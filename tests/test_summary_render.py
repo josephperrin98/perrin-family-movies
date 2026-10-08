@@ -3,7 +3,7 @@ from datetime import date
 
 from summary.facts import RatingRow, compute_facts
 from summary.render import (
-    MONTH_ABBR, assemble, fallback_colour, period_label, render_facts, subject,
+    MONTH_ABBR, assemble, fallback_colour, period_label, render_facts, subject, title,
 )
 
 
@@ -62,8 +62,13 @@ class TestFallbackAndAssemble(unittest.TestCase):
             self.assertIn("septembre 2026", fallback_colour(tier, "septembre 2026"))
 
     def test_assemble_skips_empty_parts(self):
-        self.assertEqual(assemble("Salut 🎬", ""), "Salut 🎬")
-        self.assertEqual(assemble("Salut", "• x"), "Salut\n\n• x")
+        self.assertEqual(assemble("*T*", "Salut 🎬", ""), "*T*\n\nSalut 🎬")
+        self.assertEqual(assemble("*T*", "Salut", "• x"), "*T*\n\nSalut\n\n• x")
+
+    def test_title_names_the_period_in_whatsapp_bold(self):
+        self.assertEqual(title(2026, 11), "*Résumé Perrin-rama — novembre 2026*")
+        self.assertEqual(title(2026, 9, date(2026, 10, 9)),
+                         "*Résumé Perrin-rama — septembre et début octobre 2026*")
 
 
 if __name__ == "__main__":

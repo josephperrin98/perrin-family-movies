@@ -39,7 +39,8 @@ class TestGenerateMessage(unittest.TestCase):
         self.assertFalse(result.used_fallback)
         self.assertEqual(result.attempts, 1)
         self.assertEqual(result.colour_text, GOOD)
-        self.assertTrue(result.full_message.startswith(GOOD))
+        self.assertTrue(result.full_message.startswith("*Résumé Perrin-rama — "))
+        self.assertIn(GOOD, result.full_message)
         self.assertIn("«Le Daim» — Chloé 8,0", result.full_message)
 
     def test_retry_sends_draft_and_errors_back(self):
