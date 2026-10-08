@@ -80,6 +80,7 @@ tests/                 unittest suite (no network or database needed)
 |---|---|
 | `DATABASE_URL` | Create a free project on [Neon](https://neon.tech), then **Connect** → copy the *pooled* connection string. Any Postgres works. |
 | `OMDB_API_KEY` | Request a free key at [omdbapi.com/apikey.aspx](https://www.omdbapi.com/apikey.aspx). It arrives by email and must be activated. |
+| `TMDB_READ_TOKEN` | Optional, for display titles in the monthly summary. Free account on [themoviedb.org](https://www.themoviedb.org/) → Settings → API → *API Read Access Token*. |
 | `family_pin` | Optional. Any passphrase. Prefer a few words over 4 digits: there is no lockout on wrong attempts. |
 
 ### 2. Run locally
@@ -161,3 +162,5 @@ to film recommendations to logging past viewings in plain language.
 ## License
 
 [MIT](LICENSE)
+
+This product uses the TMDB API but is not endorsed or certified by TMDB.
