@@ -110,6 +110,9 @@ def init_db():
             )
         """))
         
+        # Title shown in the monthly summary (original or French), filled from TMDB
+        conn.execute(text("ALTER TABLE movies ADD COLUMN IF NOT EXISTS display_title TEXT"))
+
         # Create indexes for common queries
         conn.execute(text("CREATE INDEX IF NOT EXISTS idx_ratings_user ON ratings(user_id)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS idx_ratings_movie ON ratings(movie_id)"))
