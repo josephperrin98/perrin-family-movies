@@ -7,12 +7,22 @@ Tables: users, movies, ratings, watch_status
 import streamlit as st
 from sqlalchemy import create_engine, text
 from sqlalchemy.pool import QueuePool
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 import os
 
 # Database engine (singleton)
 _engine = None
+
+
+def utc_now() -> datetime:
+    """Current time in UTC, without a time zone, as every timestamp is stored.
+
+    Not datetime.now(): that's the clock of whatever machine runs the app
+    (UTC on Streamlit Cloud, Paris on a laptop in France), which would shift
+    ratings across month boundaries in the monthly summary.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
 def get_engine():
@@ -252,7 +262,7 @@ def get_or_create_movie(omdb_data: dict) -> int:
 
 def add_rating(user_id: int, movie_id: int, score: float, comment: str = "", mom_compatible: Optional[bool] = None) -> int:
     """Add or update a rating. Returns rating ID."""
-    now = datetime.now()
+    now = utc_now()
     # Convert bool to int for storage (None stays None)
     mom_compat_int = None if mom_compatible is None else (1 if mom_compatible else 0)
     
@@ -385,7 +395,7 @@ def set_watch_status(user_id: int, movie_id: int, status: str):
     if status not in ('watched', 'want_to_watch', 'not_interested'):
         raise ValueError(f"Invalid status: {status}")
     
-    now = datetime.now()
+    now = utc_now()
     watched_at = now if status == 'watched' else None
     
     with get_engine().begin() as conn:

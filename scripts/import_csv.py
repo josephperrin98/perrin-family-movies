@@ -13,7 +13,7 @@ import csv
 import re
 import time
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import create_engine, text
 
 # ---------------------------------------------------------------------------
@@ -317,7 +317,7 @@ def upsert_movie(imdb_id, title, year, director, genre, country, actors, plot,
 def upsert_rating(user_id, movie_id, score, comment, mom_compatible):
     """Insert or update a rating."""
     mom_int = None if mom_compatible is None else (1 if mom_compatible else 0)
-    now = datetime.now()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)  # naive UTC, as database.utc_now
     with engine.begin() as conn:
         existing = conn.execute(
             text("SELECT id FROM ratings WHERE user_id = :uid AND movie_id = :mid"),
@@ -339,7 +339,7 @@ def upsert_rating(user_id, movie_id, score, comment, mom_compatible):
 
 def upsert_watch_status(user_id, movie_id, watched_at=None):
     """Mark a movie as watched."""
-    now = datetime.now()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)  # naive UTC, as database.utc_now
     with engine.begin() as conn:
         conn.execute(text("""
             INSERT INTO watch_status (user_id, movie_id, status, watched_at, updated_at)

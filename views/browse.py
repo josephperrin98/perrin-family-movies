@@ -243,7 +243,7 @@ def format_time_ago(timestamp) -> str:
     else:
         dt = timestamp
     
-    now = datetime.now()
+    now = db.utc_now()  # timestamps are stored in UTC
     
     # Calculate difference
     diff = now - dt

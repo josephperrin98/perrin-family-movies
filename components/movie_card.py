@@ -5,6 +5,7 @@ Reusable across different pages.
 
 import streamlit as st
 from typing import Optional
+import database as db
 import omdb
 
 
@@ -192,7 +193,7 @@ def _format_time_ago(timestamp) -> str:
     else:
         dt = timestamp
     
-    now = datetime.now()
+    now = db.utc_now()  # timestamps are stored in UTC
     if dt.tzinfo:
         now = datetime.now(dt.tzinfo)
     
