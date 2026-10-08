@@ -23,6 +23,16 @@ class TestChooseDisplayTitle(unittest.TestCase):
     def test_english_keeps_original(self):
         self.assertEqual(choose_display_title("GoodFellas", "en", "Goodfellas"), "GoodFellas")
 
+    def test_non_latin_original_uses_english_even_if_language_matches(self):
+        # TMDB lists It Must Be Heaven as French, but its original title is Arabic
+        self.assertEqual(
+            choose_display_title("إن شئت كما في السماء", "fr", "It Must Be Heaven"), "It Must Be Heaven"
+        )
+
+    def test_digits_and_accents_count_as_latin(self):
+        self.assertEqual(choose_display_title("Blade Runner 2049", "en", "Blade Runner 2049"), "Blade Runner 2049")
+        self.assertEqual(choose_display_title("Les Choses de la vie", "fr", "The Things of Life"), "Les Choses de la vie")
+
     def test_other_languages_use_english_title(self):
         self.assertEqual(choose_display_title("Das Leben der Anderen", "de", "The Lives of Others"), "The Lives of Others")
         self.assertEqual(choose_display_title("Affeksjonsverdi", "no", "Sentimental Value"), "Sentimental Value")

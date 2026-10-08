@@ -7,6 +7,7 @@ movies.title comes from) only knows English titles; TMDB knows each film's
 original title and original language, looked up by IMDb ID.
 """
 
+import unicodedata
 from typing import Callable, Optional
 
 import requests
@@ -20,9 +21,20 @@ ORIGINAL_TITLE_LANGUAGES = {"fr", "en", "it", "es"}
 Titles = Optional[tuple[str, str]]
 
 
+def is_latin(title: str) -> bool:
+    """True if every letter in the title is Latin. Accents count as Latin;
+    digits and punctuation are ignored."""
+    letters = [c for c in title if c.isalpha()]
+    return all(unicodedata.name(c, "").startswith("LATIN") for c in letters)
+
+
 def choose_display_title(original: str, language: str, english: str) -> str:
-    """Original title for the languages the family reads, English otherwise."""
-    if language in ORIGINAL_TITLE_LANGUAGES:
+    """Original title for the languages the family reads, English otherwise.
+
+    The alphabet check guards against inconsistent metadata: TMDB lists some
+    co-productions as French while their original title is in Arabic.
+    """
+    if language in ORIGINAL_TITLE_LANGUAGES and is_latin(original):
         return original
     return english
 
