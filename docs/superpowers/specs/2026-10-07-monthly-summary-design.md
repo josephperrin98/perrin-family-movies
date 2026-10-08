@@ -193,7 +193,8 @@ with a question that makes people want to talk. Don't reuse jokes from
 3. `titles_mentioned` matches the «…» extracted from the text.
 4. No digits outside «…» (so «Blade Runner 2049» passes).
 5. Length within the tier's range (starting values: `aucun` 80–400,
-   `leger` 150–500, `complet` 300–900 characters; tuned in the eval).
+   `leger` 150–500, `complet` 300–900 characters; tuned in the eval: `complet`
+   is now 250–600).
 6. At least one emoji and one `?`.
 7. `difflib.SequenceMatcher` ratio < 0.6 against each previous colour text.
 8. Tier `aucun`: no «…» at all.
@@ -273,3 +274,22 @@ Estimated cost: about $0.60 per dev run, about $3 for the whole tuning.
 - An LLM judge for humour (10 cases are better judged by a human).
 - Vertex AI / Google Cloud (possible later exercise; only `writer.py` changes).
 - Sub-projects #2 (recommendations) and #3 (logging past viewings).
+
+## Changes since the design (2026-10-08)
+
+- **First send covers September and early October.** `--until YYYY-MM-DD`
+  extends a month's period up to an excluded end date, to push the family to
+  add films sooner. The overlap with October's summary is accepted.
+- **Humour, from the eval with Joseph.** References come from the family's
+  classic films (OSS 117, Astérix & Obélix : Mission Cléopâtre, Le Prénom,
+  La grande bellezza, Notte prima degli esami), passed as
+  `classiques_famille`. The text follows highlights, then one joke, then a
+  general invitation. At most two people named, only people who rated.
+- **No callout of people who didn't rate.** It would always name the same
+  person. The `sans_note` payload field was removed; validation rejects any
+  family member's first name who didn't rate, checked in the text itself.
+- **Big months are shorter:** `complet` is 250–600 characters.
+- **Title line.** Each message opens with
+  `*Résumé Perrin-rama — <period>*`, written by code, bold in WhatsApp.
+- **SMTP login.** `smtplib.login()` hid Gmail's 535 error behind a
+  disconnect; delivery now sends `EHLO` then `AUTH PLAIN` only.
