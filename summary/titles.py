@@ -1,12 +1,12 @@
 """
 Display titles for the monthly summary.
 
-OMDb only gives English titles. The family wants the original title when it is
-written in the Latin alphabet, and the French title otherwise (Japanese,
-Korean, Cyrillic...). TMDB provides both, looked up by IMDb ID.
+The family's rule: keep the original title for French, English, Italian and
+Spanish films, and use the English title for everything else. OMDb (where
+movies.title comes from) only knows English titles; TMDB knows each film's
+original title and original language, looked up by IMDb ID.
 """
 
-import unicodedata
 from typing import Callable, Optional
 
 import requests
@@ -14,37 +14,31 @@ from sqlalchemy import text
 
 TMDB_FIND_URL = "https://api.themoviedb.org/3/find/{imdb_id}"
 TIMEOUT = 10
+ORIGINAL_TITLE_LANGUAGES = {"fr", "en", "it", "es"}
 
-# (original_title, french_title), or None when TMDB has no match
-Titles = Optional[tuple[str, Optional[str]]]
-
-
-def is_latin(title: str) -> bool:
-    """True if every letter in the title is Latin. Accents count as Latin;
-    digits and punctuation are ignored."""
-    letters = [c for c in title if c.isalpha()]
-    return all(unicodedata.name(c, "").startswith("LATIN") for c in letters)
+# (original_title, original_language), or None when TMDB has no match
+Titles = Optional[tuple[str, str]]
 
 
-def choose_display_title(original: str, french: Optional[str]) -> str:
-    """Original title if readable (Latin alphabet), otherwise the French one."""
-    if is_latin(original) or not french:
+def choose_display_title(original: str, language: str, english: str) -> str:
+    """Original title for the languages the family reads, English otherwise."""
+    if language in ORIGINAL_TITLE_LANGUAGES:
         return original
-    return french
+    return english
 
 
 def parse_tmdb_find(data: dict) -> Titles:
-    """Extract (original_title, french_title) from a TMDB /find response.
+    """Extract (original_title, original_language) from a TMDB /find response.
 
     Films come back in movie_results; TV series (Fleabag, The Bear...) in
-    tv_results, whose fields are called *_name instead of *_title.
+    tv_results, whose title field is called original_name.
     """
-    for results, original_key, french_key in (
-        (data.get("movie_results"), "original_title", "title"),
-        (data.get("tv_results"), "original_name", "name"),
+    for results, title_key in (
+        (data.get("movie_results"), "original_title"),
+        (data.get("tv_results"), "original_name"),
     ):
-        if results and results[0].get(original_key):
-            return results[0][original_key], results[0].get(french_key)
+        if results and results[0].get(title_key) and results[0].get("original_language"):
+            return results[0][title_key], results[0]["original_language"]
     return None
 
 
@@ -62,7 +56,7 @@ def fetch_tmdb_titles(imdb_id: str, token: str) -> Titles:
     try:
         response = requests.get(
             TMDB_FIND_URL.format(imdb_id=imdb_id),
-            params={"external_source": "imdb_id", "language": "fr-FR"},
+            params={"external_source": "imdb_id"},
             headers={"Authorization": f"Bearer {token}"},
             timeout=TIMEOUT,
         )
@@ -86,7 +80,8 @@ def resolve_display_title(imdb_id: str, title: str, fetch: Callable[[str], Title
     titles = fetch(imdb_id)
     if titles is None:
         return None
-    return choose_display_title(*titles)
+    original, language = titles
+    return choose_display_title(original, language, english=title)
 
 
 def fill_display_titles(engine, fetch: Callable[[str], Titles], dry_run: bool = False) -> list[dict]:
