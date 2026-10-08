@@ -18,5 +18,11 @@ class TestPostgresDriver(unittest.TestCase):
         self.assertEqual(engine.dialect.driver, "psycopg")
 
 
+class TestSummaryDependencies(unittest.TestCase):
+    def test_anthropic_sdk_is_v1(self):
+        import anthropic
+        self.assertTrue(anthropic.__version__.startswith("1."))
+
+
 if __name__ == "__main__":
     unittest.main()

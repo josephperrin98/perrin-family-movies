@@ -113,6 +113,24 @@ def init_db():
         # Title shown in the monthly summary (original or French), filled from TMDB
         conn.execute(text("ALTER TABLE movies ADD COLUMN IF NOT EXISTS display_title TEXT"))
 
+        # One row per monthly summary emailed (see summary/store.py)
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS monthly_summaries (
+                id SERIAL PRIMARY KEY,
+                month DATE UNIQUE NOT NULL,
+                tier TEXT NOT NULL,
+                colour_text TEXT,
+                full_message TEXT NOT NULL,
+                used_fallback BOOLEAN NOT NULL,
+                attempts INTEGER NOT NULL,
+                validation_errors JSONB,
+                model TEXT,
+                input_tokens INTEGER,
+                output_tokens INTEGER,
+                created_at TIMESTAMPTZ DEFAULT now()
+            )
+        """))
+
         # Create indexes for common queries
         conn.execute(text("CREATE INDEX IF NOT EXISTS idx_ratings_user ON ratings(user_id)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS idx_ratings_movie ON ratings(movie_id)"))
