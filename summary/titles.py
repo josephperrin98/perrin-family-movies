@@ -34,11 +34,18 @@ def choose_display_title(original: str, french: Optional[str]) -> str:
 
 
 def parse_tmdb_find(data: dict) -> Titles:
-    """Extract (original_title, french_title) from a TMDB /find response."""
-    results = data.get("movie_results") or []
-    if not results or not results[0].get("original_title"):
-        return None
-    return results[0]["original_title"], results[0].get("title")
+    """Extract (original_title, french_title) from a TMDB /find response.
+
+    Films come back in movie_results; TV series (Fleabag, The Bear...) in
+    tv_results, whose fields are called *_name instead of *_title.
+    """
+    for results, original_key, french_key in (
+        (data.get("movie_results"), "original_title", "title"),
+        (data.get("tv_results"), "original_name", "name"),
+    ):
+        if results and results[0].get(original_key):
+            return results[0][original_key], results[0].get(french_key)
+    return None
 
 
 class TmdbAuthError(Exception):
@@ -71,9 +78,10 @@ def fetch_tmdb_titles(imdb_id: str, token: str) -> Titles:
 def resolve_display_title(imdb_id: str, title: str, fetch: Callable[[str], Titles]) -> Optional[str]:
     """Display title for one film, or None if it can't be resolved yet.
 
-    Manually added films (placeholder IDs) keep the title the family typed.
+    Films without a real IMDb ID (placeholders such as manual_... from the app
+    or csv_... from the import) keep the title the family typed.
     """
-    if imdb_id.startswith("manual_"):
+    if not imdb_id.startswith("tt"):
         return title
     titles = fetch(imdb_id)
     if titles is None:

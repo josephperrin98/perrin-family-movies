@@ -61,6 +61,10 @@ class TestParseTmdbFind(unittest.TestCase):
         self.assertIsNone(parse_tmdb_find({"movie_results": []}))
         self.assertIsNone(parse_tmdb_find({}))
 
+    def test_tv_series_are_found_too(self):
+        data = {"movie_results": [], "tv_results": [{"original_name": "Fleabag", "name": "Fleabag"}]}
+        self.assertEqual(parse_tmdb_find(data), ("Fleabag", "Fleabag"))
+
     def test_missing_original_title(self):
         self.assertIsNone(parse_tmdb_find({"movie_results": [{"title": "Parasite"}]}))
 
@@ -92,6 +96,12 @@ class TestResolveDisplayTitle(unittest.TestCase):
             raise AssertionError("manual movies must not call TMDB")
 
         self.assertEqual(resolve_display_title("manual_les-bronzes", "Les Bronzés", fetch), "Les Bronzés")
+
+    def test_csv_import_placeholder_keeps_typed_title_without_lookup(self):
+        def fetch(imdb_id):
+            raise AssertionError("placeholder IDs must not call TMDB")
+
+        self.assertEqual(resolve_display_title("csv_tapie_2023", "Tapie", fetch), "Tapie")
 
     def test_found_on_tmdb(self):
         def fetch(imdb_id):
