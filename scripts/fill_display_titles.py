@@ -10,7 +10,7 @@ import argparse
 import os
 
 import database
-from summary.titles import fetch_tmdb_titles, fill_display_titles
+from summary.titles import TmdbAuthError, fetch_tmdb_titles, fill_display_titles
 
 
 def main():
@@ -23,11 +23,14 @@ def main():
         raise SystemExit("TMDB_READ_TOKEN environment variable is required")
 
     database.init_db()  # adds the display_title column if missing
-    results = fill_display_titles(
-        database.get_engine(),
-        fetch=lambda imdb_id: fetch_tmdb_titles(imdb_id, token),
-        dry_run=args.dry_run,
-    )
+    try:
+        results = fill_display_titles(
+            database.get_engine(),
+            fetch=lambda imdb_id: fetch_tmdb_titles(imdb_id, token),
+            dry_run=args.dry_run,
+        )
+    except TmdbAuthError as e:
+        raise SystemExit(f"{e}. Use the long 'API Read Access Token', not the short API key.")
 
     for r in results:
         shown = r["display_title"] or "(not found, will retry)"

@@ -41,8 +41,17 @@ def parse_tmdb_find(data: dict) -> Titles:
     return results[0]["original_title"], results[0].get("title")
 
 
+class TmdbAuthError(Exception):
+    """TMDB rejected the token: a configuration problem, not a missing film."""
+
+
 def fetch_tmdb_titles(imdb_id: str, token: str) -> Titles:
-    """Look up a film on TMDB by IMDb ID. Returns None if not found or on error."""
+    """Look up a film on TMDB by IMDb ID.
+
+    Returns None if the film isn't found or the request fails (retried next
+    run). Raises TmdbAuthError on a rejected token, so a bad setup stops the
+    run instead of marking every film as not found.
+    """
     try:
         response = requests.get(
             TMDB_FIND_URL.format(imdb_id=imdb_id),
@@ -50,8 +59,11 @@ def fetch_tmdb_titles(imdb_id: str, token: str) -> Titles:
             headers={"Authorization": f"Bearer {token}"},
             timeout=TIMEOUT,
         )
-        response.raise_for_status()
     except requests.RequestException:
+        return None
+    if response.status_code in (401, 403):
+        raise TmdbAuthError(f"TMDB rejected the token (HTTP {response.status_code})")
+    if response.status_code != 200:
         return None
     return parse_tmdb_find(response.json())
 

@@ -1,7 +1,12 @@
 import unittest
+from unittest import mock
+
+import requests
 
 from summary.titles import (
+    TmdbAuthError,
     choose_display_title,
+    fetch_tmdb_titles,
     is_latin,
     parse_tmdb_find,
     resolve_display_title,
@@ -58,6 +63,27 @@ class TestParseTmdbFind(unittest.TestCase):
 
     def test_missing_original_title(self):
         self.assertIsNone(parse_tmdb_find({"movie_results": [{"title": "Parasite"}]}))
+
+
+class TestFetchTmdbTitles(unittest.TestCase):
+    def _response(self, status, body=None):
+        response = mock.Mock(status_code=status)
+        response.json.return_value = body or {}
+        return response
+
+    def test_rejected_token_raises_instead_of_looking_like_not_found(self):
+        with mock.patch("summary.titles.requests.get", return_value=self._response(401)):
+            with self.assertRaises(TmdbAuthError):
+                fetch_tmdb_titles("tt0211915", "bad-token")
+
+    def test_found(self):
+        body = {"movie_results": [{"original_title": "기생충", "title": "Parasite"}]}
+        with mock.patch("summary.titles.requests.get", return_value=self._response(200, body)):
+            self.assertEqual(fetch_tmdb_titles("tt6751668", "token"), ("기생충", "Parasite"))
+
+    def test_network_error_is_not_found_for_now(self):
+        with mock.patch("summary.titles.requests.get", side_effect=requests.ConnectionError):
+            self.assertIsNone(fetch_tmdb_titles("tt6751668", "token"))
 
 
 class TestResolveDisplayTitle(unittest.TestCase):
