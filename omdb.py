@@ -12,6 +12,17 @@ OMDB_URL = "https://www.omdbapi.com/"
 TIMEOUT = 10
 
 
+def describe_error(e: requests.RequestException) -> str:
+    """A message for the screen. Never str(e): it contains the URL, and the
+    URL contains the API key."""
+    status = getattr(e.response, "status_code", None)
+    if status == 401:
+        return "OMDb rejected the API key: check OMDB_API_KEY"
+    if status:
+        return f"OMDb answered with HTTP {status}, try again later"
+    return f"Could not reach OMDb ({type(e).__name__})"
+
+
 def get_api_key() -> str:
     """Get OMDb API key from Streamlit secrets."""
     try:
@@ -78,7 +89,7 @@ def search_movies(query: str, year: Optional[str] = None, page: int = 1) -> dict
     except requests.Timeout:
         return {"results": [], "total_results": 0, "error": "Request timed out"}
     except requests.RequestException as e:
-        return {"results": [], "total_results": 0, "error": f"Connection error: {str(e)}"}
+        return {"results": [], "total_results": 0, "error": describe_error(e)}
 
 
 def get_movie_details(imdb_id: str) -> dict:
@@ -119,7 +130,7 @@ def get_movie_details(imdb_id: str) -> dict:
     except requests.Timeout:
         return {"error": "Request timed out"}
     except requests.RequestException as e:
-        return {"error": f"Connection error: {str(e)}"}
+        return {"error": describe_error(e)}
 
 
 def autocomplete_search(query: str, max_results: int = 5) -> list[dict]:
