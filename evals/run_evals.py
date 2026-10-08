@@ -10,6 +10,7 @@ Costs real money (one Claude call per case); needs ANTHROPIC_API_KEY.
 
 import argparse
 import json
+import os
 from datetime import date
 from pathlib import Path
 
@@ -40,6 +41,9 @@ def main():
     parser.add_argument("--model", default="claude-opus-5-5")
     args = parser.parse_args()
 
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise SystemExit("ANTHROPIC_API_KEY is not set in this terminal. "
+                         "Run: read -s ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY")
     client = anthropic.Anthropic()
     results, tokens_in, tokens_out = [], 0, 0
     for path in sorted((ROOT / "cases" / args.set).glob("*.json")):
