@@ -39,68 +39,53 @@ def export_table_to_csv(table_name: str, query: str) -> str:
     return output.getvalue()
 
 
+# One CSV per table. SELECT * so a new column is backed up without anyone
+# remembering to add it; tests/test_backup.py checks no table is missing.
+# ratings and watch_status also carry who and which film, for humans reading them.
+BACKUP_QUERIES = {
+    "users.csv": "SELECT * FROM users ORDER BY id",
+    "movies.csv": "SELECT * FROM movies ORDER BY id",
+    "ratings.csv": """
+        SELECT r.*, u.username, m.title AS movie_title, m.imdb_id
+        FROM ratings r
+        JOIN users u ON r.user_id = u.id
+        JOIN movies m ON r.movie_id = m.id
+        ORDER BY r.id
+    """,
+    "watch_status.csv": """
+        SELECT ws.*, u.username, m.title AS movie_title, m.imdb_id
+        FROM watch_status ws
+        JOIN users u ON ws.user_id = u.id
+        JOIN movies m ON ws.movie_id = m.id
+        ORDER BY ws.id
+    """,
+    "monthly_summaries.csv": "SELECT * FROM monthly_summaries ORDER BY month",
+}
+
+
 def create_backup():
     """Create a full backup as a ZIP file."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    # Export each table
-    tables = {
-        "users.csv": "SELECT id, username, display_name, avatar_emoji, created_at FROM users ORDER BY id",
-        "movies.csv": "SELECT id, imdb_id, title, year, poster_url, director, genre, country, plot, imdb_rating, added_at FROM movies ORDER BY id",
-        "ratings.csv": """
-            SELECT r.id, r.user_id, u.username, r.movie_id, m.title, m.imdb_id,
-                   r.score, r.comment, r.mom_compatible, r.created_at, r.updated_at
-            FROM ratings r
-            JOIN users u ON r.user_id = u.id
-            JOIN movies m ON r.movie_id = m.id
-            ORDER BY r.id
-        """,
-        "watch_status.csv": """
-            SELECT ws.id, ws.user_id, u.username, ws.movie_id, m.title, m.imdb_id,
-                   ws.status, ws.watched_at, ws.updated_at
-            FROM watch_status ws
-            JOIN users u ON ws.user_id = u.id
-            JOIN movies m ON ws.movie_id = m.id
-            ORDER BY ws.id
-        """
-    }
-    
-    # Create ZIP file
     zip_filename = f"backup_{timestamp}.zip"
-    
+
     with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        for filename, query in tables.items():
-            csv_data = export_table_to_csv(filename, query)
-            zip_file.writestr(filename, csv_data)
-        
-        # Add README
-        readme = f"""Perrin Family Movies Backup
+        for filename, query in BACKUP_QUERIES.items():
+            zip_file.writestr(filename, export_table_to_csv(filename, query))
+        zip_file.writestr("README.txt", f"""Perrin Family Movies Backup
 Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
-Contents:
-- users.csv: All family members
-- movies.csv: All movies in the database  
-- ratings.csv: All ratings with user and movie info
-- watch_status.csv: Watch status records (watchlist, etc.)
+One CSV per table: {", ".join(BACKUP_QUERIES)}
 
 To restore: Import CSVs into your PostgreSQL database.
-"""
-        zip_file.writestr("README.txt", readme)
-    
+""")
+
     print(f"✅ Backup created: {zip_filename}")
-    
-    # Print summary
     with engine.connect() as conn:
-        users = conn.execute(text("SELECT COUNT(*) FROM users")).fetchone()[0]
-        movies = conn.execute(text("SELECT COUNT(*) FROM movies")).fetchone()[0]
-        ratings = conn.execute(text("SELECT COUNT(*) FROM ratings")).fetchone()[0]
-        watch = conn.execute(text("SELECT COUNT(*) FROM watch_status")).fetchone()[0]
-    
-    print(f"   Users: {users}")
-    print(f"   Movies: {movies}")
-    print(f"   Ratings: {ratings}")
-    print(f"   Watch Status: {watch}")
-    
+        for filename in BACKUP_QUERIES:
+            table = filename.removesuffix(".csv")
+            count = conn.execute(text(f"SELECT COUNT(*) FROM {table}")).fetchone()[0]
+            print(f"   {table}: {count}")
+
     return zip_filename
 
 
