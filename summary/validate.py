@@ -10,7 +10,7 @@ import re
 import unicodedata
 from difflib import SequenceMatcher
 
-from summary.facts import MonthFacts
+from summary.facts import FAMILY_CLASSICS, MonthFacts
 
 LENGTH = {"aucun": (80, 400), "leger": (150, 500), "complet": (300, 900)}
 SIMILARITY_LIMIT = 0.6
@@ -30,13 +30,11 @@ def validate(colour, facts: MonthFacts, previous_texts: list[str]) -> list[str]:
     errors = []
     message = colour.message
     quoted = quoted_titles(message)
-    known_titles = {t.lower() for t in facts.films}
+    known_titles = {t.lower() for t in facts.films | set(FAMILY_CLASSICS)}
 
-    if facts.tier == "aucun" and quoted:
-        errors.append("Aucun film ce mois-ci : ne cite aucun titre entre « ».")
     for title in quoted:
         if title.lower() not in known_titles:
-            errors.append(f"Titre inconnu : «{title}». Recopie exactement un titre des données.")
+            errors.append(f"Titre inconnu : «{title}». Recopie exactement un titre de 'notes' ou de 'classiques_famille'.")
     if {t.lower() for t in colour.titles_mentioned} != {t.lower() for t in quoted}:
         errors.append("titles_mentioned doit lister exactement les titres écrits entre « ».")
     for name in colour.names_mentioned:

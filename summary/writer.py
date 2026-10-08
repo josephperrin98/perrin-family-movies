@@ -15,7 +15,7 @@ import anthropic
 import pydantic
 from pydantic import BaseModel
 
-from summary.facts import MonthFacts
+from summary.facts import FAMILY_CLASSICS, MonthFacts
 from summary.render import period_label
 
 PROMPT_PATH = Path(__file__).with_name("prompt_fr.txt")
@@ -58,6 +58,7 @@ def build_payload(facts: MonthFacts, previous_texts: list[str]) -> dict:
         },
         "mois_precedent": {"nb_notes": facts.previous_count, "moyenne": facts.previous_average},
         "deja_ecrit": previous_texts,
+        "classiques_famille": FAMILY_CLASSICS,
     }
 
 

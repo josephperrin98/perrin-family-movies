@@ -15,6 +15,15 @@ from zoneinfo import ZoneInfo
 
 PARIS = ZoneInfo("Europe/Paris")
 
+# The family's shared film culture: Claude may quote these in any month
+FAMILY_CLASSICS = [
+    "OSS 117",
+    "Astérix & Obélix : Mission Cléopâtre",
+    "Le Prénom",
+    "La grande bellezza",
+    "Notte prima degli esami",
+]
+
 
 @dataclass(frozen=True)
 class RatingRow:

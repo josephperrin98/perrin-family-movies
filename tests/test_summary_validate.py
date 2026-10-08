@@ -76,7 +76,13 @@ class TestValidate(unittest.TestCase):
         empty = compute_facts(2026, 9, [], [])
         message = "Septembre sans film ? La télé a fait grève 📺 ! Racontez-nous ce que vous avez regardé, même «Tenet»."
         errors = self.check(message, facts=empty)
-        self.assertTrue(any("Aucun film" in e for e in errors))
+        self.assertTrue(any("Tenet" in e for e in errors))
+
+    def test_family_classics_may_be_quoted_any_month(self):
+        empty = compute_facts(2026, 9, [], [])
+        message = ("Pas un film noté ce mois-ci 📺 Comme dirait «OSS 117», ça ne serait pas "
+                   "une bonne situation, ça. Qui se lance en premier ?")
+        self.assertEqual(self.check(message, facts=empty), [])
 
 
 if __name__ == "__main__":
