@@ -1,0 +1,54 @@
+name: Monthly Summary
+
+on:
+  schedule:
+    # The 1st of each month at 12:17 UTC, for the
+    # month that just ended. Off the hour because scheduled runs queue up there.
+    - cron: '17 12 1 * *'
+  workflow_dispatch:
+    inputs:
+      month:
+        description: 'YYYY-MM (empty = previous month)'
+        required: false
+      dry_run:
+        description: 'Generate only: no email, no database write'
+        type: boolean
+        default: true
+
+# Two overlapping runs could both email before either records the month
+concurrency: monthly-summary
+
+jobs:
+  summary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build and send the summary
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TMDB_READ_TOKEN: ${{ secrets.TMDB_READ_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_APP_PASSWORD: ${{ secrets.SMTP_APP_PASSWORD }}
+          SUMMARY_TO: ${{ secrets.SUMMARY_TO }}
+          # The repo is public, so its logs are too: print counts, never family data
+          PUBLIC_LOGS: 'true'
+          # Inputs go through env, not straight into the script below, so a
+          # crafted value can't be run as a shell command
+          MONTH: ${{ inputs.month }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          args=()
+          if [ -n "$MONTH" ]; then args+=(--month "$MONTH"); fi
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          python -m scripts.send_monthly_summary "${args[@]}"
