@@ -40,6 +40,46 @@ used once, for one job (writing the "colour"). The learning focus is
 
 ## Architecture
 
+### One monthly run
+
+```mermaid
+flowchart TD
+    Cron["GitHub Actions<br/>1st of the month, 12:17 UTC"] --> Done{"Month already in<br/>monthly_summaries?"}
+    Done -->|yes| Stop([Stop: nothing sent])
+    Done -->|no| Facts["facts.py<br/>SQL on Neon → MonthFacts + tier"]
+    Facts --> Render["render.py<br/>factual bullets (no AI)"]
+    Facts --> Writer["writer.py<br/>Claude writes the colour<br/>(structured output)"]
+    Writer --> Validate{"validate.py<br/>all checks pass?"}
+    Validate -->|no, attempt < 3| Retry["New request:<br/>payload + draft + errors"]
+    Retry --> Validate
+    Validate -->|no, 3 attempts| Fallback["Fixed AI-free sentence"]
+    Validate -->|yes| Assemble["Assemble message<br/>colour + bullets"]
+    Fallback --> Assemble
+    Render --> Assemble
+    Assemble --> Email["delivery.py<br/>email + wa.me link<br/>(Gmail SMTP)"]
+    Email --> Store[("Insert into<br/>monthly_summaries")]
+    Store --> Joseph([Joseph reviews → taps → family group])
+
+    Writer -. API error after SDK retries .-> Fallback
+```
+
+The dotted arrow is the network-failure path: the family still gets the
+factual summary.
+
+### Where things run
+
+```mermaid
+flowchart LR
+    GH["GitHub Actions<br/>(temporary machine)"] -->|SQL read + 1 insert| Neon[("Neon Postgres")]
+    GH -->|HTTPS + API key| Claude["Anthropic API<br/>claude-opus-5-5"]
+    GH -->|SMTP + app password| Gmail["Dedicated Gmail"]
+    Gmail --> Inbox["Joseph's Hotmail"]
+    Inbox -->|wa.me link| WA["WhatsApp family group"]
+    Streamlit["Streamlit app"] -->|family adds ratings| Neon
+```
+
+### Modules
+
 ```
 .github/workflows/monthly-summary.yml   cron + manual trigger
 scripts/send_monthly_summary.py         thin entry point: env vars -> service
